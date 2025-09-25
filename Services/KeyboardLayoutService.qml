@@ -10,7 +10,7 @@ import qs.Services
 Singleton {
   id: root
   property string currentLayout: I18n.tr("system.unknown-layout")
-  property int updateInterval: 1000 // Update every second
+  property int updateInterval: 100 // Update every 100ms for responsiveness
 
   // Timer to periodically update the layout
   Timer {
@@ -83,6 +83,39 @@ Singleton {
           root.currentLayout = "Unknown"
         } catch (e) {
           root.currentLayout = "Unknown"
+        }
+      }
+    }
+  }
+
+  // Process for Sway using swaymsg
+  Process {
+    id: swayLayoutProcess
+    running: false
+    command: ["swaymsg", "-t", "get_inputs"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          const data = JSON.parse(text)
+          // Find keyboard inputs and get their xkb_active_layout_name
+          for (const input of data) {
+            if (input.type === "keyboard" && input.xkb_active_layout_name) {
+              root.currentLayout = extractLayoutCode(input.xkb_active_layout_name)
+              return
+            }
+          }
+          // Fallback: look for libinput device with keyboard capabilities
+          for (const input of data) {
+            if (input.libinput && input.libinput.send_events === "enabled" && 
+                input.xkb_active_layout_name) {
+              root.currentLayout = extractLayoutCode(input.xkb_active_layout_name)
+              return
+            }
+          }
+          root.currentLayout = "Unknown"
+        } catch (e) {
+          Logger.warn("KeyboardLayout", "Failed to parse Sway input data:", e)
+          fallbackToLocalectl()
         }
       }
     }
@@ -212,6 +245,8 @@ Singleton {
       hyprlandLayoutProcess.running = true
     } else if (CompositorService.isNiri) {
       niriLayoutProcess.running = true
+    } else if (CompositorService.isSway) {
+      swayLayoutProcess.running = true
     } else {
       // Try detection methods in order of preference
       if (Qt.platform.os === "linux") {
