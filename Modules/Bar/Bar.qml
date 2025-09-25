@@ -64,7 +64,7 @@ Variants {
           id: bar
 
           anchors.fill: parent
-          color: Qt.alpha(Color.mSurface, Settings.data.bar.backgroundOpacity)
+          color: "transparent"
 
           // Floating bar rounded corners
           radius: Settings.data.bar.floating ? Style.radiusL : 0
