@@ -34,7 +34,8 @@ Singleton {
                            "Volume": volumeComponent,
                            "WiFi": wiFiComponent,
                            "WallpaperSelector": wallpaperSelectorComponent,
-                           "Workspace": workspaceComponent
+                           "Workspace": workspaceComponent,
+                           "Scratchpad": scratchpadComponent
                          })
 
   property var widgetMetadata: ({
@@ -94,6 +95,9 @@ Singleton {
                                     "allowUserSettings": true,
                                     "labelMode": "index",
                                     "hideUnoccupied": false
+                                  },
+                                  "Scratchpad": {
+                                    "allowUserSettings": false
                                   },
                                   "MediaMini": {
                                     "allowUserSettings": true,
@@ -190,6 +194,9 @@ Singleton {
   }
   property Component workspaceComponent: Component {
     Workspace {}
+  }
+  property Component scratchpadComponent: Component {
+    Scratchpad {}
   }
   property Component taskbarComponent: Component {
     Taskbar {}
