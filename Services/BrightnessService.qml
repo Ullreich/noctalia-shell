@@ -8,6 +8,7 @@ import qs.Commons
 Singleton {
   id: root
 
+  property int updateInterval: 100 // Update every 100ms for responsiveness
   property list<var> ddcMonitors: []
   readonly property list<Monitor> monitors: variants.instances
   property bool appleDisplayPresent: false
@@ -119,6 +120,18 @@ Singleton {
     // Signal for brightness changes
     signal brightnessUpdated(real newBrightness)
 
+    // Timer for periodic brightness updates (ensures sync with external changes)
+    readonly property Timer refreshTimer: Timer {
+      interval: root.updateInterval
+      repeat: true
+      running: !monitor.isDdc && !monitor.isAppleDisplay && monitor.brightnessPath !== ""
+      onTriggered: {
+        // Force reload and check for changes
+        monitor.brightnessWatcher.reload()
+        updateBrightnessFromFile()
+      }
+    }
+
     // FileView to watch for external brightness changes (internal displays only)
     readonly property FileView brightnessWatcher: FileView {
       id: brightnessWatcher
@@ -131,17 +144,21 @@ Singleton {
           monitor.ignoreNextChange = false
           return
         }
-        if (text() === "")
+        updateBrightnessFromFile()
+      }
+    }
+
+    function updateBrightnessFromFile() {
+      if (monitor.brightnessWatcher.text() === "")
         return
-        var current = parseInt(text().trim())
-        if (!isNaN(current) && monitor.maxBrightness > 0) {
-          var newBrightness = current / monitor.maxBrightness
-          // Only update if it's actually different (avoid feedback loops)
-          if (Math.abs(newBrightness - monitor.brightness) > 0.01) {
-            monitor.brightness = newBrightness
-            monitor.brightnessUpdated(monitor.brightness)
-            //Logger.log("Brightness", "External change detected:", monitor.modelData.name, monitor.brightness)
-          }
+      var current = parseInt(monitor.brightnessWatcher.text().trim())
+      if (!isNaN(current) && monitor.maxBrightness > 0) {
+        var newBrightness = current / monitor.maxBrightness
+        // Only update if it's actually different (avoid feedback loops)
+        if (Math.abs(newBrightness - monitor.brightness) > 0.01) {
+          monitor.brightness = newBrightness
+          monitor.brightnessUpdated(monitor.brightness)
+          Logger.log("Brightness", "External change detected:", monitor.modelData.name, "new brightness:", monitor.brightness)
         }
       }
     }
