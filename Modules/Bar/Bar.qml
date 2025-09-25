@@ -34,6 +34,7 @@ Variants {
       screen: modelData || null
 
       WlrLayershell.namespace: "noctalia-bar"
+      // WlrLayershell.layer: WlrLayershell.LayerBackground
 
       implicitHeight: (Settings.data.bar.position === "left" || Settings.data.bar.position === "right") ? screen.height : Math.round(Style.barHeight * scaling)
       implicitWidth: (Settings.data.bar.position === "left" || Settings.data.bar.position === "right") ? Math.round(Style.barHeight * scaling) : screen.width
